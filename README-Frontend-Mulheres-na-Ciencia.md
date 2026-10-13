@@ -6,9 +6,97 @@
 
 Vamos construir o frontend do catálogo de pesquisadoras, áreas acadêmicas e publicações, consumindo a API Flask da oficina. O backend valida e persiste os dados.
 
-O guia está organizado por arquivos, sem checkpoints. Adicione somente as famílias dos componentes utilizados e preserve seus auxiliares. A etapa 13 identifica os componentes extras que não são alcançados pelos imports da aplicação.
+O guia está dividido em duas partes: configuração do projeto e acesso à API; depois, interface e integração. Adicione somente as famílias dos componentes utilizados e preserve seus auxiliares. A etapa 13 identifica os componentes extras que não são alcançados pelos imports da aplicação.
 
 Se estiver usando a pasta `frontend` já entregue, execute `npm install` e configure `.env.local`. Os arquivos da aplicação já existem; não execute `init` nem `add` novamente. As etapas de criação abaixo servem para reproduzir o projeto do início.
+
+## Sumário
+
+- [1. Preparar o ambiente](#etapa-1)
+- [2. Criar o projeto Next.js](#etapa-2)
+- [3. Adicionar os componentes e configurar o tema](#etapa-3)
+- [4. Organizar os arquivos e configurar o design](#etapa-4)
+- [5. Configurar o acesso à API](#etapa-5)
+- [6. Definir os tipos](#etapa-6)
+- [7. Criar o cliente HTTP](#etapa-7)
+- [8. Criar o formulário reutilizável](#etapa-8)
+- [9. Definir os campos](#etapa-9)
+- [10. Preparar os modais](#etapa-10)
+- [11. Criar a tabela reutilizável e o perfil](#etapa-11)
+- [12. Montar as abas, formulários e consultas](#etapa-12)
+- [13. Exibir a página, limpar os componentes extras e executar](#etapa-13)
+- [14. Executar o fluxo da oficina](#etapa-14)
+- [15. Relacionar a interface aos requisitos](#etapa-15)
+- [16. Fluxo da aplicação](#etapa-16)
+- [Comandos necessários](#comandos-necessarios)
+- [Resumo das responsabilidades](#responsabilidades)
+- [Problemas comuns](#problemas-comuns)
+- [Referências](#referencias)
+
+## Etapas e entregas
+
+| Etapa | Resultado esperado |
+| --- | --- |
+| Parte 1 — Etapas 1 a 7 | Ambiente, projeto Next.js, componentes, tema, estrutura, tipos e cliente HTTP. |
+| Parte 2 — Etapas 8 a 15 | Formulários, campos, modais, tabelas, abas e integração com os requisitos. |
+
+## Tecnologias
+
+| Tecnologia | Finalidade |
+| --- | --- |
+| Node.js e npm | Executar o frontend e gerenciar as dependências. |
+| Next.js | Organizar páginas com App Router e encaminhar chamadas à API Flask. |
+| React | Construir a interface com componentes e estados. |
+| TypeScript | Definir os tipos dos dados, formulários e respostas. |
+| Tailwind CSS e PostCSS | Processar os estilos e aplicar o design das telas. |
+| Untitled UI e React Aria | Fornecer campos, botões, Selects, abas e tabelas acessíveis. |
+| Radix Dialog | Criar modais e confirmações de exclusão. |
+| next-themes | Configurar o tema da interface. |
+| API Flask | Validar os dados, executar as regras e persistir os registros no backend. |
+
+<a id="estrutura-do-projeto"></a>
+
+## Estrutura do Projeto
+
+```text
+src/
+  app/
+    layout.tsx
+    page.tsx
+  styles/
+    globals.css
+    theme.css
+    typography.css
+  providers/
+    route-provider.tsx
+    theme-provider.tsx
+  utils/
+    cx.ts
+    is-react-component.ts
+  hooks/
+    use-resize-observer.ts
+  lib/
+    types.ts
+    api.ts
+    campos.ts
+    dialog-portal.ts
+  components/
+    base/
+    application/
+    foundations/
+    ui/
+      dialog.tsx
+      dialog-box.tsx
+    oficina/
+      formulario.tsx
+      modal.tsx
+      excluir-pesquisadora.tsx
+      tabela.tsx
+      perfil.tsx
+      catalogo.tsx
+scripts/
+  limpar-componentes.cjs
+```
 
 ## O que vamos construir
 
@@ -23,25 +111,11 @@ Se estiver usando a pasta `frontend` já entregue, execute `npm install` e confi
 
 A aba Publicações é um painel de cadastro; a consulta permanece no perfil porque a API oferece listagem por pesquisadora. O cadastro da pesquisadora não possui Select de associação.
 
-## Sumário
+## Parte 1 — Projeto e acesso à API
 
-- 1. Preparar o ambiente
-- 2. Criar o projeto Next.js
-- 3. Adicionar os componentes e configurar o tema
-- 4. Organizar os arquivos e configurar o design
-- 5. Configurar o acesso à API
-- 6. Definir os tipos
-- 7. Criar o cliente HTTP
-- 8. Criar o formulário reutilizável
-- 9. Definir os campos
-- 10. Preparar os modais
-- 11. Criar a tabela reutilizável e o perfil
-- 12. Montar as abas, formulários e consultas
-- 13. Exibir a página, limpar os componentes extras e executar
-- 14. Executar o fluxo da oficina
-- 15. Relacionar a interface aos requisitos
+<a id="etapa-1"></a>
 
-## 1. Preparar o ambiente
+### 1. Preparar o ambiente
 
 Utilize Node.js **22.12 ou superior**, npm e um editor. Esse requisito acompanha o `package.json` do frontend entregue. Com Node 18, o build e o servidor do Next.js não executam. Confira também Docker Desktop e uv para o backend.
 
@@ -72,7 +146,7 @@ http://localhost:5000/docs
 
 As migrações já existem no projeto: não execute `db init` novamente.
 
-### Backend em Docker neste Windows
+#### Backend em Docker neste Windows
 
 Neste computador, o Controle de Aplicativo bloqueia extensões nativas do Python. A versão do backend em `Oficina_Da-Ideia-A-Aplicacao/` agora contém `Dockerfile`, `.dockerignore` e `compose.override.yaml`, que adicionam um serviço Linux para a API e usam o banco já configurado no `compose.yaml`.
 
@@ -97,7 +171,7 @@ Nesse modo, os comandos Flask devem executar no container. Para aplicar novas mi
 
 A configuração monta `src/` e `migrations/` no container e deixa a API em modo de desenvolvimento com recarga automática. Alterações nas dependências exigem uma nova execução de `docker compose build backend` e `docker compose up -d --wait backend`.
 
-### Contrato utilizado neste guia
+#### Contrato utilizado neste guia
 
 Os caminhos e campos abaixo foram conferidos nas rotas e schemas da branch `pesquisadoras-api` disponível neste repositório.
 
@@ -117,7 +191,7 @@ O frontend considera listagens como arrays, IDs numéricos, campos em `snake_cas
 
 Não há rota GET para listar todas as publicações nem rotas de edição/exclusão de áreas e publicações no contrato utilizado. Por isso a aba Publicações contém um painel de cadastro, e a consulta ocorre no perfil. Ao utilizar outra versão do backend, confira o contrato em `/docs` antes de integrar.
 
-### Campos e limites confirmados
+#### Campos e limites confirmados
 
 | Cadastro | Obrigatórios | Limites e opcionais |
 | --- | --- | --- |
@@ -127,7 +201,9 @@ Não há rota GET para listar todas as publicações nem rotas de edição/exclu
 
 Titularidade e situação são campos de texto: o backend não define opções fechadas. Use “publicada” como exemplo de situação. A validação da interface complementa a validação feita pelo backend.
 
-## 2. Criar o projeto Next.js
+<a id="etapa-2"></a>
+
+### 2. Criar o projeto Next.js
 
 Em outro terminal:
 
@@ -160,9 +236,11 @@ Na raiz do frontend, crie `components.json`:
 }
 ```
 
-## 3. Adicionar os componentes e configurar o tema
+<a id="etapa-3"></a>
 
-### 3.1. Adicionar os componentes
+### 3. Adicionar os componentes e configurar o tema
+
+#### 3.1. Adicionar os componentes
 
 Execute na raiz do frontend:
 
@@ -190,7 +268,7 @@ Utilize dois **Selects simples** no cadastro de publicação: uma pesquisadora e
 
 A CLI adiciona as famílias dos componentes selecionados, incluindo variações e auxiliares. Os arquivos extras que não forem utilizados pela aplicação serão identificados na etapa 13.
 
-### 3.2. Tema, tipografia e processamento do CSS
+#### 3.2. Tema, tipografia e processamento do CSS
 
 Crie `src/styles` e preencha os três arquivos abaixo. Esta versão inclui os tokens completos da base aberta do Untitled UI, mantendo as personalizações da oficina em `globals.css`.
 
@@ -215,7 +293,7 @@ export default {
 };
 ```
 
-#### Tokens do tema
+##### Tokens do tema
 
 **`src/styles/theme.css`:**
 
@@ -1075,7 +1153,7 @@ export default {
 }
 ```
 
-#### Tipografia
+##### Tipografia
 
 **`src/styles/typography.css`:**
 
@@ -1512,7 +1590,7 @@ export default {
 }
 ```
 
-#### CSS global e personalizações da oficina
+##### CSS global e personalizações da oficina
 
 **`src/styles/globals.css`:**
 
@@ -1590,7 +1668,7 @@ Importe somente `@/styles/globals.css` no layout. O próprio arquivo global impo
 
 Reinicie o servidor após alterar o PostCSS.
 
-### 3.3. Criar os utilitários e hooks
+#### 3.3. Criar os utilitários e hooks
 
 Os componentes copiados pela CLI importam os arquivos abaixo. Crie-os caso ainda não existam.
 
@@ -1719,7 +1797,7 @@ export function useResizeObserver<T extends Element>({
 
 O Select pode importar ComboBox, que utiliza o hook acima. Preserve as dependências indiretas até concluir a análise da etapa 13. O código da CLI é sensível à versão: conserve também qualquer outro auxiliar referenciado pelos componentes instalados.
 
-### 3.4. Providers e layout principal
+#### 3.4. Providers e layout principal
 
 Depois de criar os estilos e auxiliares acima, crie os providers abaixo.
 
@@ -1803,51 +1881,15 @@ O provider de tema aplica a classe `dark-mode`.
 
 Os estilos completos e as personalizações do tema já foram definidos na etapa 3.2.
 
-## 4. Organizar os arquivos e configurar o design
+<a id="etapa-4"></a>
 
-```text
-src/
-  app/
-    layout.tsx
-    page.tsx
-  styles/
-    globals.css
-    theme.css
-    typography.css
-  providers/
-    route-provider.tsx
-    theme-provider.tsx
-  utils/
-    cx.ts
-    is-react-component.ts
-  hooks/
-    use-resize-observer.ts
-  lib/
-    types.ts
-    api.ts
-    campos.ts
-    dialog-portal.ts
-  components/
-    base/
-    application/
-    foundations/
-    ui/
-      dialog.tsx
-      dialog-box.tsx
-    oficina/
-      formulario.tsx
-      modal.tsx
-      excluir-pesquisadora.tsx
-      tabela.tsx
-      perfil.tsx
-      catalogo.tsx
-scripts/
-  limpar-componentes.cjs
-```
+### 4. Organizar os arquivos e configurar o design
 
-Mantenha os auxiliares transitivos adicionados pela CLI. A árvore indica os arquivos criados neste guia, além das pastas da biblioteca. Em um projeto novo, use os providers `route-provider.tsx` e `theme-provider.tsx` apresentados na etapa 3. A versão já entregue pode usar `router-provider.tsx` e `theme.tsx`: conserve seus nomes e imports juntos, sem criar providers duplicados.
+Organize os arquivos conforme a [Estrutura do Projeto](#estrutura-do-projeto) apresentada no início do guia.
 
-### Padrão compartilhado com Eventos
+Mantenha os auxiliares transitivos adicionados pela CLI. A árvore da seção Estrutura do Projeto indica os arquivos criados neste guia, além das pastas da biblioteca. Em um projeto novo, use os providers `route-provider.tsx` e `theme-provider.tsx` apresentados na etapa 3. A versão já entregue pode usar `router-provider.tsx` e `theme.tsx`: conserve seus nomes e imports juntos, sem criar providers duplicados.
+
+#### Padrão compartilhado com Eventos
 
 - Cabeçalho BVApp, título separado por borda e descrição abaixo.
 - Três abas sublinhadas; a troca de aba limpa a mensagem de sucesso.
@@ -1857,7 +1899,7 @@ Mantenha os auxiliares transitivos adicionados pela CLI. A árvore indica os arq
 - Modais: Dialog Box com largura `sm:max-w-xl`, rolagem e fechamento externo bloqueado.
 - Exclusão: diálogo dedicado com nome da pesquisadora, aviso sobre publicações e indicador de carregamento.
 
-### Design das telas
+#### Design das telas
 
 | Tela | Conteúdo | Ações |
 | --- | --- | --- |
@@ -1867,7 +1909,7 @@ Mantenha os auxiliares transitivos adicionados pela CLI. A árvore indica os arq
 | Perfil | Dados pessoais e aba de publicações | Editar pesquisadora e cadastrar publicação |
 | Exclusão | Confirmação e aviso sobre os registros vinculados | Cancelar e excluir |
 
-### Design dos formulários
+#### Design dos formulários
 
 | Formulário | Organização |
 | --- | --- |
@@ -1877,7 +1919,7 @@ Mantenha os auxiliares transitivos adicionados pela CLI. A árvore indica os arq
 
 Use cards com borda discreta, cantos arredondados, fundo azul escuro e ação principal roxa. Todos os formulários têm um campo por linha, inclusive os dois Selects. O rodapé alinha os botões à direita e permite quebra de linha em telas menores. A data usa um input nativo `date`.
 
-### Design dos modais
+#### Design dos modais
 
 - Cadastro e edição: título, descrição, campos, Cancelar e Salvar.
 - Perfil: nome, instituição, titularidade, dados pessoais e publicações.
@@ -1887,7 +1929,9 @@ Use cards com borda discreta, cantos arredondados, fundo azul escuro e ação pr
 
 Os popovers dos Selects compartilham o portal do Dialog, conforme a etapa 10. Isso é necessário no cadastro de publicação aberto pelo perfil.
 
-## 5. Configurar o acesso à API
+<a id="etapa-5"></a>
+
+### 5. Configurar o acesso à API
 
 Crie `.env.local` na raiz do frontend:
 
@@ -1921,7 +1965,9 @@ Mantenha somente um arquivo de configuração do Next.js. Se o projeto já possu
 
 O navegador chama `/api/pesquisadora`; o Next encaminha para `http://127.0.0.1:5000/pesquisadora`. Reinicie o servidor após alterar `.env.local` ou a configuração.
 
-## 6. Definir os tipos
+<a id="etapa-6"></a>
+
+### 6. Definir os tipos
 
 **`src/lib/types.ts`:**
 
@@ -1970,7 +2016,9 @@ export type DadosPublicacao = Omit<
 
 Os IDs são gerados pelo banco. No formulário de publicação, as associações serão enviadas como IDs numéricos.
 
-## 7. Criar o cliente HTTP
+<a id="etapa-7"></a>
+
+### 7. Criar o cliente HTTP
 
 **`src/lib/api.ts`:**
 
@@ -2076,7 +2124,11 @@ export const api = {
 
 O cliente centraliza as requisições, preserva os detalhes de validação devolvidos pela API e trata o DELETE `204` antes de tentar ler JSON. Falhas de conexão e respostas inválidas são convertidas em mensagens para a interface. Não adicione uma rota de listagem geral de publicações: ela não existe no backend utilizado.
 
-## 8. Criar o formulário reutilizável
+## Parte 2 — Interface e integração
+
+<a id="etapa-8"></a>
+
+### 8. Criar o formulário reutilizável
 
 O componente apresenta um campo por linha, com largura completa. Ele será utilizado pelos cadastros de pesquisadora, área acadêmica e publicação.
 
@@ -2278,7 +2330,9 @@ export function Formulario({
 
 Os valores ficam no estado e são preservados quando a API rejeita a operação. Campos obrigatórios compostos apenas por espaços são recusados. Os Selects trabalham com IDs em string; a conversão para número ocorre antes do POST. `cancelLabel` permite “Cancelar” nos modais e “Limpar” no painel; `label` personaliza o botão de envio.
 
-## 9. Definir os campos
+<a id="etapa-9"></a>
+
+### 9. Definir os campos
 
 **`src/lib/campos.ts`:**
 
@@ -2404,11 +2458,13 @@ Use “publicada” como exemplo de situação. O campo aceita até 10 caractere
 
 Lattes e link são opcionais. A pesquisadora não possui Select de associação em seu cadastro.
 
-## 10. Preparar os modais
+<a id="etapa-10"></a>
+
+### 10. Preparar os modais
 
 A base combina Radix Dialog, Dialog Box para formulários/perfil e um diálogo dedicado de exclusão. O Radix controla foco e teclado. Clique fora não fecha o modal; Escape e os botões fecham apenas quando não há envio em andamento.
 
-### 10.1. Compartilhar o portal do Dialog com os Selects
+#### 10.1. Compartilhar o portal do Dialog com os Selects
 
 Os Selects aparecem no painel e no modal de cadastro pelo perfil. Crie o contexto e a base antes dos demais componentes:
 
@@ -2498,7 +2554,7 @@ export function DialogFooter({
 }
 ```
 
-### 10.2. Criar o Dialog Box
+#### 10.2. Criar o Dialog Box
 
 **`src/components/ui/dialog-box.tsx`:**
 
@@ -2578,7 +2634,7 @@ export function Component({
 }
 ```
 
-### 10.3. Adaptar o popover do Select
+#### 10.3. Adaptar o popover do Select
 
 Substitua o conteúdo do arquivo gerado pela CLI pelo código abaixo. Ele usa o contexto quando está dentro de um modal e mantém o comportamento normal fora dele:
 
@@ -2631,7 +2687,7 @@ export const Popover = (props: PopoverProps) => {
 
 A propriedade de portal corresponde à versão de `react-aria-components` usada nesta implementação. Se outra versão alterar seus tipos, confira a API do Popover antes de adaptar esse trecho.
 
-### 10.4. Criar o wrapper da oficina
+#### 10.4. Criar o wrapper da oficina
 
 **`src/components/oficina/modal.tsx`:**
 
@@ -2670,7 +2726,7 @@ export function Modal({
 }
 ```
 
-### 10.5. Confirmar a exclusão
+#### 10.5. Confirmar a exclusão
 
 **`src/components/oficina/excluir-pesquisadora.tsx`:**
 
@@ -2774,9 +2830,11 @@ export function ExcluirPesquisadora({
 
 O modal fecha após sucesso. Se a API recusar, a mensagem permanece visível. A exclusão remove a pesquisadora e suas publicações vinculadas; as áreas acadêmicas permanecem cadastradas.
 
-## 11. Criar a tabela reutilizável e o perfil
+<a id="etapa-11"></a>
 
-### 11.1. Tabela reutilizável
+### 11. Criar a tabela reutilizável e o perfil
+
+#### 11.1. Tabela reutilizável
 
 **`src/components/oficina/tabela.tsx`:**
 
@@ -2825,7 +2883,7 @@ export function Tabela<T extends { id: number }>({ label, items, columns }: Prop
 
 Cada coluna informa um ID, um título e como renderizar o valor. O primeiro campo identifica a linha para acessibilidade. O componente também apresenta uma mensagem quando a listagem está vazia.
 
-### 11.2. Perfil da pesquisadora
+#### 11.2. Perfil da pesquisadora
 
 **`src/components/oficina/perfil.tsx`:**
 
@@ -3020,7 +3078,9 @@ O perfil recebe o ID selecionado na tabela. Ele consulta os dados e a rota espec
 
 A consulta `GET /pesquisadora/{id}` também possui a coleção de publicações, mas este guia usa `GET /publicacao/pesquisadora/{id}` para demonstrar a operação específica. Ao cadastrar pelo perfil, a pesquisadora vem previamente selecionada.
 
-## 12. Montar as abas, formulários e consultas
+<a id="etapa-12"></a>
+
+### 12. Montar as abas, formulários e consultas
 
 **`src/components/oficina/catalogo.tsx`:**
 
@@ -3514,23 +3574,25 @@ export function Catalogo() {
 }
 ```
 
-### Como funciona o painel de publicação
+#### Como funciona o painel de publicação
 
 Na aba Publicações, o formulário aparece diretamente no painel. A pesquisadora e a área precisam existir antes do cadastro. Os IDs dos Selects são convertidos em inteiros positivos e enviados no POST. Após o sucesso, a mensagem aparece e o formulário é limpo. O botão Limpar apaga os valores sem enviar uma requisição.
 
-### Cadastro pelo perfil
+#### Cadastro pelo perfil
 
 Ao abrir Cadastrar publicação no perfil, `pesquisadora_id` inicia com a pesquisadora selecionada. Após salvar, o perfil é aberto novamente e consulta a lista atualizada. A associação corresponde à opção selecionada no formulário.
 
-### Consulta das publicações
+#### Consulta das publicações
 
 As publicações são consultadas dentro do perfil, com área acadêmica, resumo, situação, data e link. Não há barra de pesquisa nem listagem geral de publicações.
 
-### Exclusão da pesquisadora
+#### Exclusão da pesquisadora
 
 A confirmação informa que as publicações vinculadas também serão removidas e que as áreas permanecerão. Enquanto a requisição está em andamento, o diálogo bloqueia operações repetidas. Em caso de erro, mantém a mensagem e permite tentar novamente.
 
-## 13. Exibir a página, limpar os componentes extras e executar
+<a id="etapa-13"></a>
+
+### 13. Exibir a página, limpar os componentes extras e executar
 
 **`src/app/page.tsx`:**
 
@@ -3544,7 +3606,7 @@ export default function Page() {
 
 Mantenha os providers e os estilos configurados no `layout.tsx`. Na aplicação pronta, essa página já está ligada ao catálogo; não reinstale todas as famílias da biblioteca.
 
-### 13.1. Criar o script de limpeza
+#### 13.1. Criar o script de limpeza
 
 Execute a limpeza somente depois de criar os arquivos da oficina e conectar o catálogo à página. O script identifica a raiz do frontend pela localização da pasta `scripts`, sem depender da pasta atual do terminal.
 
@@ -3774,7 +3836,7 @@ if (apply) {
 }
 ```
 
-### 13.2. Conferir os arquivos sem uso
+#### 13.2. Conferir os arquivos sem uso
 
 Verifique os tipos:
 
@@ -3799,7 +3861,7 @@ Se aparecer `Limpeza cancelada: imports não resolvidos`, nenhum componente ser�
 - Os providers deste guia ficam em `src/providers`. No layout, use `@/providers/route-provider` e `@/providers/theme-provider`.
 - O Select instalado pode importar ComboBox, que depende de `@/hooks/use-resize-observer`. O código completo desse hook está na etapa 3.3. Confira esse arquivo antes de repetir a simulação.
 
-### 13.3. Aplicar a limpeza
+#### 13.3. Aplicar a limpeza
 
 ```powershell
 node scripts/limpar-componentes.cjs --aplicar
@@ -3813,7 +3875,7 @@ Pacotes npm não são desinstalados pelo script.
 
 A análise considera imports, reexports, referências de tipos e imports dinâmicos com caminhos literais. Se houver outro mecanismo de carregamento de componentes, inclua suas entradas na análise antes de aplicar a limpeza.
 
-### 13.4. Conferir e executar
+#### 13.4. Conferir e executar
 
 ```powershell
 npx tsc --noEmit
@@ -3831,15 +3893,17 @@ Mantenha a API Flask ativa, seja no outro terminal ou no serviço Docker. O fron
 
 Se o Turbopack falhar ao iniciar subprocessos neste Windows, use `next dev --webpack` e `next build --webpack` nos scripts de `package.json`. A aplicação entregue usa essa configuração.
 
-### Pacotes e arquivos de demonstração
+#### Pacotes e arquivos de demonstração
 
 O script não desinstala pacotes npm. Confira os imports do código, os plugins CSS e os arquivos de configuração antes de usar `npm uninstall`. Nesta versão completa do guia, `@tailwindcss/typography` processa a folha de tipografia e deve ser mantido. Providers, hooks, utilitários e configurações também ficam fora do alcance da remoção automática.
 
 Se um starter antigo tiver trazido a biblioteca completa, remova o workflow de demonstração `sync-components.yml` para que ele não restaure os componentes descartados. Com npm, mantenha `package-lock.json` e remova apenas o lockfile de outro gerenciador que não esteja sendo utilizado.
 
-## 14. Executar o fluxo da oficina
+<a id="etapa-14"></a>
 
-### 14.1 Cadastrar uma área
+### 14. Executar o fluxo da oficina
+
+#### 14.1 Cadastrar uma área
 
 Abra **Áreas acadêmicas → Cadastrar área**.
 
@@ -3848,7 +3912,7 @@ Abra **Áreas acadêmicas → Cadastrar área**.
 | Nome | Computação |
 | Descrição | Sistemas e tecnologias da informação. |
 
-### 14.2 Cadastrar uma pesquisadora
+#### 14.2 Cadastrar uma pesquisadora
 
 Abra **Pesquisadoras → Cadastrar pesquisadora**.
 
@@ -3861,7 +3925,7 @@ Abra **Pesquisadoras → Cadastrar pesquisadora**.
 | Biografia | Pesquisadora em divulgação científica. |
 | Currículo Lattes | Deixe vazio |
 
-### 14.3 Cadastrar uma publicação pelo painel
+#### 14.3 Cadastrar uma publicação pelo painel
 
 Abra a aba **Publicações**.
 
@@ -3879,7 +3943,7 @@ Clique em **Cadastrar publicação**.
 
 O formulário será limpo após o sucesso. O link utilizado no exemplo é fictício.
 
-### 14.4 Consultar a publicação
+#### 14.4 Consultar a publicação
 
 Abra **Pesquisadoras → Visualizar**, na linha de Ana Costa.
 
@@ -3887,13 +3951,13 @@ Selecione **Publicações** dentro do perfil.
 
 A publicação deverá aparecer com sua área acadêmica, resumo, situação, data e link.
 
-### 14.5 Cadastrar pelo perfil
+#### 14.5 Cadastrar pelo perfil
 
 No perfil de Ana Costa, clique em **Cadastrar publicação**.
 
 A pesquisadora já estará selecionada. Preencha os demais campos e salve.
 
-### 14.6 Editar e excluir
+#### 14.6 Editar e excluir
 
 Edite a biografia da pesquisadora e confira a alteração no perfil.
 
@@ -3901,7 +3965,9 @@ Para excluir, clique em **Excluir** na tabela e confirme.
 
 A pesquisadora e as publicações vinculadas serão removidas. As áreas acadêmicas permanecerão cadastradas.
 
-## 15. Relacionar a interface aos requisitos
+<a id="etapa-15"></a>
+
+### 15. Relacionar a interface aos requisitos
 
 | Requisito | Interface | Requisição |
 | --- | --- | --- |
@@ -3922,7 +3988,7 @@ A interface exige as associações, e o backend valida os registros referenciado
 A remoção das publicações vinculadas à pesquisadora é executada pelo backend.
 
 
-### Ações disponíveis por aba
+#### Ações disponíveis por aba
 
 | Aba | Cadastrar | Visualizar | Editar | Excluir |
 | --- | --- | --- | --- | --- |
@@ -3931,6 +3997,112 @@ A remoção das publicações vinculadas à pesquisadora é executada pelo backe
 | Áreas acadêmicas | Sim | Listagem | Não previsto | Não previsto |
 
 Não adicione ações sem rotas no backend. As associações e a remoção dos registros vinculados são validadas e executadas pela API.
+
+<a id="etapa-16"></a>
+
+### 16. Fluxo da aplicação
+
+```text
+Pessoa usuária
+      ↓
+Aba / formulário / modal
+      ↓
+Validação da interface
+      ↓
+Cliente HTTP (src/lib/api.ts)
+      ↓
+Requisição /api no Next.js
+      ↓
+Rewrite configurado com API_URL
+      ↓
+API Flask
+      ↓
+Validação e regras do backend
+      ↓
+Banco de dados
+```
+
+Resposta:
+
+```text
+JSON ou resposta sem corpo da API
+      ↓
+Cliente HTTP
+      ↓
+Atualização dos estados React
+      ↓
+Tabela / perfil / mensagem na interface
+```
+
+O frontend apresenta e valida os campos da interface. A API mantém a validação definitiva, as regras de associação e a persistência. Erros são tratados pelo cliente HTTP e exibidos no componente responsável.
+
+<a id="comandos-necessarios"></a>
+
+## Comandos necessários
+
+### Para um projeto criado do zero
+
+Siga as etapas 1 a 7 para criar o projeto, instalar as dependências, adicionar componentes e preencher configurações, estilos, providers, tipos e cliente HTTP. Depois, implemente a Parte 2. Os comandos de instalação estão nas etapas 2 e 3.
+
+### Para o frontend já entregue
+
+Na pasta que contém o frontend:
+
+```powershell
+cd frontend
+npm install
+if (-not (Test-Path .env.local)) { Copy-Item .env.example .env.local }
+npm run dev
+```
+
+Confira API_URL em .env.local e inicie o backend conforme a etapa 1. Reinicie o Next.js após mudar essa variável.
+
+### No uso cotidiano, com o projeto configurado
+
+Na raiz do frontend, mantenha a API ativa e execute:
+
+```powershell
+npm run dev
+```
+
+### Conferência e limpeza após implementar a interface
+
+```powershell
+npx tsc --noEmit
+node scripts/limpar-componentes.cjs
+```
+
+Revise a lista apresentada pelo script. Para aplicar a limpeza descrita na etapa 13 e verificar o resultado:
+
+```powershell
+node scripts/limpar-componentes.cjs --aplicar
+npx tsc --noEmit
+npm run build
+```
+
+<a id="responsabilidades"></a>
+
+## Resumo das responsabilidades
+
+| Arquivo/Pasta | Responsabilidade |
+| --- | --- |
+| .env.local | Endereço da API usado pelo Next.js. |
+| next.config.ts | Encaminhamento das chamadas /api por rewrites. |
+| components.json | Aliases utilizados pela CLI de componentes. |
+| postcss.config.mjs | Processamento do Tailwind CSS. |
+| src/app/layout.tsx | Layout, providers e import dos estilos globais. |
+| src/app/page.tsx | Exibição do catálogo da oficina. |
+| src/styles/ | Tema, tipografia e personalizações visuais. |
+| src/providers/ | Integração da navegação e do tema. |
+| src/utils/ e src/hooks/ | Utilitários e auxiliares dos componentes. |
+| src/lib/types.ts | Tipos das entidades e respostas. |
+| src/lib/api.ts | Cliente HTTP e tratamento de respostas e erros. |
+| src/lib/campos.ts | Definição dos campos, opções e validações dos formulários. |
+| src/lib/dialog-portal.ts | Integração dos popovers com o portal dos modais. |
+| src/components/base/, application/ e foundations/ | Componentes da biblioteca e seus auxiliares. |
+| src/components/ui/ | Componentes de Dialog utilizados na oficina. |
+| src/components/oficina/ | Formulários, modais, tabelas e catálogo específicos da aplicação. |
+| scripts/limpar-componentes.cjs | Identificação e remoção opcional de componentes sem uso. |
 
 ## Problemas comuns
 
